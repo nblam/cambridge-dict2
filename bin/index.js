@@ -29,9 +29,9 @@ async function getHTML(url) {
     `https://dictionary.cambridge.org/dictionary/english/${beta}`
   );
   const $ = cheerio.load(res);
-  const test = $(".sense-body.dsense_b").first(); // selector cambridge dict
+  const section = $(".sense-body.dsense_b"); // selector cambridge dict
 
-  const vocab = test.find(".sense-body.dsense_b > .def-block.ddef_block");
+  const vocab = section.find(".sense-body.dsense_b > .def-block.ddef_block");
 
   const id = uuidv4();
   const def = vocab
