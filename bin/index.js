@@ -17,7 +17,6 @@ const options = program.opts();
 const beta = !options.beta ? "no" : options.beta;
 const add = !options.add ? "no" : options.add;
 
-console.log(options);
 async function getHTML(url) {
   const { data: html } = await axios.get(url);
   return html;
