@@ -1,0 +1,23 @@
+{
+  "name": "cheerio",
+  "version": "1.0.0",
+  "description": "",
+  "bin": {
+    "dict": "./bin/index.js"
+  },
+  "main": "./bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "chalk": "2.4",
+    "cheerio": "^1.0.0-rc.12",
+    "commander": "^10.0.1",
+    "uuid": "^9.0.0"
+  }
+}
