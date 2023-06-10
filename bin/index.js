@@ -3,10 +3,9 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { program } from "commander";
 import chalk from "chalk";
-import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
-const addNote = (noteid, word, def, exam, vn = " ") => {
+const addNote = (noteid, word, def, exam) => {
   return {
     action: "addNote",
     version: 6,
@@ -15,11 +14,10 @@ const addNote = (noteid, word, def, exam, vn = " ") => {
         deckName: "Default",
         modelName: "Word",
         fields: {
-          "Note ID": `${noteid}`,
+          "Note ID": noteid,
           Word: word,
           Definition: def,
           Example: exam,
-          VN: vn,
         },
         options: {
           allowDuplicate: false,
@@ -35,18 +33,10 @@ const addNote = (noteid, word, def, exam, vn = " ") => {
   };
 };
 
-async function postData(request = {}) {
-  const response = await fetch("http://127.0.0.1:8765", {
-    method: "POST",
-    body: JSON.stringify(request),
-  });
-  const { result } = await response.json();
-  return result;
-}
 program
   .description("A sample application to parse options")
   .option("-b, --beta <VALUE>", "Specify a VALUE", "Foo")
-  .option("-a, --add <VALUE>", "Specify a VALUE", "Foo");
+  .option("-a, --add <VALUE>", "Specify a definition of word", null);
 
 program.parse();
 
@@ -59,47 +49,38 @@ async function getHTML(url) {
   return html;
 }
 
-// them flag cho cambridge va american dictionary
-
 (async function () {
   const res = await getHTML(
     `https://dictionary.cambridge.org/dictionary/english/${beta}`
   );
   const $ = cheerio.load(res);
-  const section = $(".sense-body.dsense_b"); // selector cambridge dict
 
+  const section = $(".sense-body.dsense_b"); // selector cambridge dict
   const vocab = section.find(".sense-body.dsense_b > .def-block.ddef_block");
+  const defIndex = +add - 1; // number of definition
 
   const id = uuidv4();
-  const def = vocab
-    .eq(+add - 1)
-    .find(".def.ddef_d.db")
-    .text();
-  const ex = vocab
-    .eq(+add - 1)
-    .find("span.eg.deg")
-    .first()
-    .text();
-  const data = `${id}\t${beta}\t${def}\t${ex}\n`;
-  if (!(add === "Foo")) {
-    fs.writeFile("./log.txt", data, { flag: "a" }, function (err) {
-      if (err) {
-        return console.error(err);
-      }
-    });
+  const def = vocab.eq(defIndex).find(".def.ddef_d.db").text();
+  const ex = vocab.eq(defIndex).find("span.eg.deg").first().text();
 
-    postData(addNote(id, beta, def, ex));
-    console.log("DONE!");
-  }
-
-  if (add === "Foo") {
+  if (options.add) {
+    // have -a flag, add note to anki
+    axios
+      .post("http://127.0.0.1:8765", addNote(id, beta, def, ex))
+      .catch((_) => {
+        console.log(chalk.red("Please open anki"));
+      });
+  } else {
+    // show definition, not add to anki
     vocab.each((i, e) => {
       const def = chalk.blue(i + 1 + ". " + $(e).find(".def.ddef_d.db").text());
       console.log(def);
       $(e)
         .find("span.eg.deg")
         .each((i, e) => {
-          if (i <= 2) console.log("- " + chalk.yellow($(e).text()));
+          const example = chalk.yellow($(e).text());
+          // show 3 example
+          if (i <= 3) console.log(`- ${example}`);
         });
     });
   }
