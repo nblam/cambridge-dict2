@@ -6,6 +6,43 @@ import chalk from "chalk";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
+const addNote = (noteid, word, def, exam, vn = " ") => {
+  return {
+    action: "addNote",
+    version: 6,
+    params: {
+      note: {
+        deckName: "Default",
+        modelName: "Word",
+        fields: {
+          "Note ID": `${noteid}`,
+          Word: word,
+          Definition: def,
+          Example: exam,
+          VN: vn,
+        },
+        options: {
+          allowDuplicate: false,
+          duplicateScope: "deck",
+          duplicateScopeOptions: {
+            deckName: "Default",
+            checkChildren: false,
+            checkAllModels: false,
+          },
+        },
+      },
+    },
+  };
+};
+
+async function postData(request = {}) {
+  const response = await fetch("http://127.0.0.1:8765", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+  const { result } = await response.json();
+  return result;
+}
 program
   .description("A sample application to parse options")
   .option("-b, --beta <VALUE>", "Specify a VALUE", "Foo")
@@ -24,7 +61,7 @@ async function getHTML(url) {
 
 // them flag cho cambridge va american dictionary
 
-(async function() {
+(async function () {
   const res = await getHTML(
     `https://dictionary.cambridge.org/dictionary/english/${beta}`
   );
@@ -45,11 +82,13 @@ async function getHTML(url) {
     .text();
   const data = `${id}\t${beta}\t${def}\t${ex}\n`;
   if (!(add === "Foo")) {
-    fs.writeFile("./log.txt", data, { flag: "a" }, function(err) {
+    fs.writeFile("./log.txt", data, { flag: "a" }, function (err) {
       if (err) {
         return console.error(err);
       }
     });
+
+    postData(addNote(id, beta, def, ex));
     console.log("DONE!");
   }
 
